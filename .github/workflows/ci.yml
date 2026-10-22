@@ -328,10 +328,19 @@ jobs:
         echo "MODE: $MODE"
         echo "VARIANT: $VARIANT"
 
-    - name: Git checkout
+    - name: Git checkout of neard
       uses: actions/checkout@v6
+      with:
+        path: neard
+
+    - name: Git checkout of CI scripts
+      uses: actions/checkout@v6
+      with:
+        repository: linux-nfc/neard-workflow
+        path: workflow
 
     - name: Install additional packages
+      working-directory: workflow
       run: |
         INSTALL=${{ matrix.container }}
         INSTALL="${INSTALL%%:*}"
@@ -361,10 +370,12 @@ jobs:
         printenv
 
     - name: Display nfc.h differences between local and Linux kernel headers
+      working-directory: neard
       run: diff -uBb /usr/include/linux/nfc.h include/nfc_copy.h || true
 
     - name: Configure
       id: configure
+      working-directory: neard
       run: |
         echo "Bootstraping in mode: $MODE"
         CONFIGURE_ARGS=""
@@ -393,25 +404,30 @@ jobs:
         fi
 
     - name: Get configure logs
+      working-directory: neard
       run: cat config.log
       if: ${{ always() && ((steps.configure.outcome == 'failure') ||
                            (steps.configure.outcome == 'success')) }}
 
     - name: Compile
+      working-directory: neard
       run: make -j$(nproc)
 
     - name: Run unit tests
       id: unit_tests
+      working-directory: neard
       run: |
         make check
       if: ${{ (matrix.arch == 'x86-64') || (matrix.arch == 'i386') }}
 
     - name: Get unit tests logs
+      working-directory: neard
       run: cat test-suite.log
       if: ${{ always() && ((steps.unit_tests.outcome == 'failure') ||
                            (steps.unit_tests.outcome == 'success')) }}
 
     - name: Check final binary
+      working-directory: neard
       run: |
         file src/neard
         ARCH_CHECK="$ARCH"
@@ -434,9 +450,11 @@ jobs:
         fi
 
     - name: Install
+      working-directory: neard
       run: make install
 
     - name: Distribution check
+      working-directory: neard
       run: make distcheck
       # distcheck runs unit tests so no point for cross compile
       # TODO: figure out how to re-configure during distcheck with --host for i386 (DISTCHECK_CONFIGURE_FLAGS)

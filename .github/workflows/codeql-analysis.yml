@@ -25,8 +25,16 @@ jobs:
         language: [ 'cpp', 'python' ]
 
     steps:
-    - name: Checkout repository
+    - name: Git checkout of neard
       uses: actions/checkout@v6
+      with:
+        path: neard
+
+    - name: Git checkout of CI scripts
+      uses: actions/checkout@v6
+      with:
+        repository: linux-nfc/neard-workflow
+        path: workflow
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
@@ -34,15 +42,20 @@ jobs:
         languages: ${{ matrix.language }}
 
     - name: Install additional packages
+      working-directory: workflow
       run: sudo ./ci/ubuntu.sh
 
     - name: Configure
+      working-directory: neard
       run: ./bootstrap-configure
 
     - name: Compile
+      working-directory: neard
       run: |
         make -j$(nproc)
         make check
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
+      with:
+        checkout_path: neard

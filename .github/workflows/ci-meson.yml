@@ -322,10 +322,19 @@ jobs:
         echo "MODE: $MODE"
         echo "VARIANT: $VARIANT"
 
-    - name: Git checkout
+    - name: Git checkout of neard
       uses: actions/checkout@v6
+      with:
+        path: neard
+
+    - name: Git checkout of CI scripts
+      uses: actions/checkout@v6
+      with:
+        repository: linux-nfc/neard-workflow
+        path: workflow
 
     - name: Install additional packages
+      working-directory: workflow
       run: |
         INSTALL=${{ matrix.container }}
         INSTALL="${INSTALL%%:*}"
@@ -355,10 +364,12 @@ jobs:
         printenv
 
     - name: Display nfc.h differences between local and Linux kernel headers
+      working-directory: neard
       run: diff -uBb /usr/include/linux/nfc.h include/nfc_copy.h || true
 
     - name: Configure
       id: configure
+      working-directory: neard
       run: |
         SETUP_ARGS=""
         if [ "$VARIANT" = "sanitizers" ]; then
@@ -399,24 +410,29 @@ jobs:
           $CROSS_FILE_ARGS
 
     - name: Get configure logs
+      working-directory: neard
       run: cat build/meson-logs/meson-log.txt
       if: ${{ always() && ((steps.configure.outcome == 'failure') ||
                            (steps.configure.outcome == 'success')) }}
 
     - name: Compile
+      working-directory: neard
       run: meson compile -C build
 
     - name: Run unit tests
       id: unit_tests
+      working-directory: neard
       run: meson test -C build
       if: ${{ (matrix.arch == 'x86-64') || (matrix.arch == 'i386') }}
 
     - name: Get unit tests logs
+      working-directory: neard
       run: cat build/meson-logs/testlog.txt
       if: ${{ always() && ((steps.unit_tests.outcome == 'failure') ||
                            (steps.unit_tests.outcome == 'success')) }}
 
     - name: Check final binary
+      working-directory: neard
       run: |
         file build/src/neard
         ARCH_CHECK="$ARCH"
@@ -439,4 +455,5 @@ jobs:
         fi
 
     - name: Install
+      working-directory: neard
       run: meson install -C build
