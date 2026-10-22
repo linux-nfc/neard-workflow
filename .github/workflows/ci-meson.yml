@@ -219,6 +219,12 @@ jobs:
             mode: maintainer
             variant: sanitizers
 
+          - container: "debian:bookworm"
+            arch: x86-64
+            compiler: gcc
+            mode: maintainer
+            variant: sanitizers
+
           # Ubuntu 32-bit builds
           - container: "ubuntu:latest"
             arch: i386
