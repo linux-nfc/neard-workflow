@@ -26,12 +26,12 @@ jobs:
 
     steps:
     - name: Git checkout of neard
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         path: neard
 
     - name: Git checkout of CI scripts
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         repository: linux-nfc/neard-workflow
         path: workflow
